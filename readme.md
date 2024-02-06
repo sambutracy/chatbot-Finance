@@ -20,7 +20,7 @@ Welcome to the ChatGPT-Powered PDF Assistant project repository! This project is
       `cd chatbot-Finance
       pip install -r requirements.txt`
 - Run the Application: Start the Streamlit application by executing the following command.
-      `streamlit run app.py`
+-     `streamlit run app.py`
 - Upload PDF: Once the application is running, upload your desired PDF document using the provided interface.
 - Ask Questions: Interact with the ChatGPT-powered assistant by typing your questions related to the uploaded PDF document.
 - Receive Answers: ChatGPT will process your queries and provide accurate responses based on the content of the PDF document.
