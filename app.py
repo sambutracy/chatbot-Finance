@@ -11,7 +11,6 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.callbacks import get_openai_callback
 import os
  
-load_dotenv()
 # Sidebar contents
 with st.sidebar:
     st.title('PDF ASSISTANT')
@@ -44,6 +43,7 @@ with st.sidebar:
     add_vertical_space(5)
     st.write('kgodfrey & sambutracy')
 
+load_dotenv()
 def main():
     st.header("Interact with pdf")
 
@@ -79,46 +79,61 @@ def main():
             length_function=len
             )
         chunks = text_splitter.split_text(text=text)
- 
-        # # embeddings
-        store_name = pdf.name[:-4]
-        st.write(f'{store_name}')
-         # st.write(chunks)
- 
-        if os.path.exists(f"{store_name}.pkl"):
-            with open(f"{store_name}.pkl", "rb") as f:
-                VectorStore = pickle.load(f)
-            # # st.write('Embeddings Loaded from the Disk')s
-        else:
-            embeddings = OpenAIEmbeddings()
-            VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
-            with open(f"{store_name}.pkl", "wb") as f:
-                pickle.dump(VectorStore, f)
- 
-        # Accept user questions/query
-        query = st.text_input("Ask questions about your PDF file:")
-        # st.write(query)
-        if st.button("Ask"):
-            if not query:
-                st.warning("Please enter a question.")
-            else:
-                with st.spinner('Searching for answers...'):
-                    # Processing query and generating responses
-                    docs = VectorStore.similarity_search(query=query, k=3)
-                    response = chain.run(input_documents=docs, question=query)
-        
-                    llm = OpenAI()
-                    chain = load_qa_chain(llm=llm, chain_type="stuff")
-                    with get_openai_callback() as cb:
-                        response = chain.run(input_documents=docs, question=query)
-                        print(cb)
-                    st.write(response)
 
-        if query:
-            # Display search results in a table or list format
-            st.write("Search Results:")
-            for i, doc in enumerate(docs):
-                st.write(f"{i + 1}. {doc['title']} - {doc['excerpt']}")
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if openai_api_key is None:
+            raise ValueError("OpenAI API key not found. Please make sure to set it in your .env file.")
+        
+        embeddings = None
+        VectorStore = None
+
+        try:
+            embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    
+            # # embeddings
+            store_name = pdf.name[:-4]
+            st.write(f'{store_name}')
+            # st.write(chunks)
+    
+            if os.path.exists(f"{store_name}.pkl"):
+                with open(f"{store_name}.pkl", "rb") as f:
+                    VectorStore = pickle.load(f)
+                # # st.write('Embeddings Loaded from the Disk')s
+            else:
+                ##embeddings = OpenAIEmbeddings()
+                VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
+                with open(f"{store_name}.pkl", "wb") as f:
+                    pickle.dump(VectorStore, f)
+        
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+
+        if VectorStore:
+    
+        # Accept user questions/query
+            query = st.text_input("Ask questions about your PDF file:")
+            # st.write(query)
+            if st.button("Ask"):
+                if not query:
+                    st.warning("Please enter a question.")
+                else:
+                    with st.spinner('Searching for answers...'):
+                        # Processing query and generating responses
+                        docs = VectorStore.similarity_search(query=query, k=3)
+                        response = chain.run(input_documents=docs, question=query)
+            
+                        llm = OpenAI()
+                        chain = load_qa_chain(llm=llm, chain_type="stuff")
+                        with get_openai_callback() as cb:
+                            response = chain.run(input_documents=docs, question=query)
+                            print(cb)
+                        st.write(response)
+
+            if query:
+                # Display search results in a table or list format
+                st.write("Search Results:")
+                for i, doc in enumerate(docs):
+                    st.write(f"{i + 1}. {doc['title']} - {doc['excerpt']}")
             
  
 if __name__ == '__main__':
