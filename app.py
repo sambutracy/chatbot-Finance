@@ -7,19 +7,19 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
-from langchain.callbacks import get_openai_callback
+#from langchain.callbacks import get_openai_callback
 
 load_dotenv()
 def main():
     st.sidebar.title('PDF ASSISTANT')
     st.sidebar.markdown('''
     ## About
-    Welcome to the PDF Assistant! This app utilizes LangChain and OpenAI's LLM model to provide an interactive chat interface for querying information from PDF documents.
+    Welcome to the PDF Assistant! This app utilizes LangChain and Gemini's LLM model to provide an interactive chat interface for querying information from PDF documents.
     
     Learn more about the technologies used:
     - [Streamlit](https://streamlit.io/)
     - [LangChain](https://python.langchain.com/)
-    - [OpenAI](https://platform.openai.com/docs/models) LLM model
+    - [Gemini](https://deepmind.google/technologies/gemini/#introduction) LLM model
     ''')
 
     # File Upload Component
@@ -60,7 +60,7 @@ def main():
         page_number = st.number_input("Go to Page", min_value=1, max_value=len(pdf_reader.pages), value=1)
         selected_page = pdf_reader.pages[page_number - 1]
         st.write(f"Page {page_number}:")
-        st.text(selected_page.extract_text())
+        #st.text(selected_page.extract_text())
 
         text = ""
         for page in pdf_reader.pages:
@@ -75,7 +75,7 @@ def main():
 
         gemini_api_key = os.getenv("GOOGLE_API_KEY")
         if gemini_api_key is None:
-            raise ValueError("Gemini API key not found. Please make sure to set it in your .env file.")
+            raise ValueError("Gemini API key not found. Please ensure to set it in your .env file.")
         
         embeddings = None
         VectorStore = None
@@ -83,7 +83,7 @@ def main():
         try:
             embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     
-            store_name = pdf.name[:-4]
+            store_name = 'faiss_index'
             VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
             VectorStore.save_local(f"{store_name}")
         
@@ -101,25 +101,12 @@ def main():
                         #st.warning("i")
                         llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3,convert_system_message_to_human=True)
                         chain = load_qa_chain(llm=llm, chain_type="stuff")
-                        with get_openai_callback() as cb:
-                            response = chain.run(input_documents=docs, question=query)
+                        #with get_openai_callback() as cb:
+                        response = chain.run(input_documents=docs, question=query)
+                        st.write("Reply:")
                         st.write(response)
 
-                        if query:
-                            st.write("Search Results:")
-                            
-                            #print(response)
-                            #st.write("Reply: ", response["output_text"])
-                            #st.warning("i")
-                            #for i, doc in enumerate(docs):
-                            #    st.write(f"{i + 1}. {doc['title']} - {doc['excerpt']}")
-                            response = chain(
-                                {"input_documents":docs, "question": query}
-                                , return_only_outputs=True)
-
-                            print(response)
-                            st.write("Reply: ", response["output_text"])
-
+                    
 
 if __name__ == '__main__':
     main()
