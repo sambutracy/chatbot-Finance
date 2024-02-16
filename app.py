@@ -7,9 +7,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
-#from langchain.callbacks import get_openai_callback
+
 
 load_dotenv()
+
 def main():
     st.sidebar.title('PDF ASSISTANT')
     st.sidebar.markdown('''
@@ -22,29 +23,29 @@ def main():
     - [Gemini](https://deepmind.google/technologies/gemini/#introduction) LLM model
     ''')
 
-    # File Upload Component
+    # File Upload pdf file
     st.write("## Upload PDF")
-    uploaded_file = st.file_uploader("Choose a PDF file", type=['pdf'])
-    if uploaded_file is not None:
-        st.success('PDF file uploaded successfully!')
-    
-    st.write("## Settings")
-    confidence_threshold = st.slider("Response Confidence Threshold", 0.1, 1.0, 0.5, 0.05)
-    st.write(f"Current Threshold: {confidence_threshold}")
+    pdf = st.file_uploader("Choose a PDF file", type=['pdf'])
 
-    # Feedback Mechanism
-    st.write("## Feedback & Support")
-    st.write("Have feedback or need help? Let us know!")
-    st.write("[Feedback Form](https://forms.gle/6ibXUXL91Tcrs8AV9)")
+    #Change confidence threshold    
+    #st.write("## Settings")
+    #confidence_threshold = st.slider("Response Confidence Threshold", 0.1, 1.0, 0.5, 0.05)
+    #st.write(f"Current Threshold: {confidence_threshold}")
 
-    st.write('kgodfrey & sambutracy')
+    # Feedback from users
+    st.sidebar.write("## Feedback & Support")
+    st.sidebar.write("Have feedback or need help? Let us know!")
+    st.sidebar.write("[Feedback Form](https://forms.gle/HhBa7HTZYnjbWSmC7)")
+
+    st.sidebar.write('kkgodfrey & sambutracy')
 
     st.header("Interact with pdf")
 
     # upload a PDF file
-    pdf = st.file_uploader("Upload PDF Document", type='pdf')
+   # pdf = st.file_uploader("Upload PDF Document", type='pdf')
  
     if pdf is not None:
+        st.success('PDF file uploaded successfully!')
         pdf_reader = PdfReader(pdf)
         st.write(f"Uploaded PDF: {pdf.name}")
         st.write(f"Number of Pages: {len(pdf_reader.pages)}")
@@ -55,12 +56,6 @@ def main():
             preview_text += page.extract_text()
         st.write("Preview:")
         st.text(preview_text[:500])
-
-        # Page navigation controls
-        page_number = st.number_input("Go to Page", min_value=1, max_value=len(pdf_reader.pages), value=1)
-        selected_page = pdf_reader.pages[page_number - 1]
-        st.write(f"Page {page_number}:")
-        #st.text(selected_page.extract_text())
 
         text = ""
         for page in pdf_reader.pages:
@@ -92,7 +87,7 @@ def main():
 
         if VectorStore:
             query = st.text_input("Ask questions about your PDF file:")
-            if st.button("Ask"):
+            if st.button("Ask") or query:
                 if not query:
                     st.warning("Please enter a question.")
                 else:
